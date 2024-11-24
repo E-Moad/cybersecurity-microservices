@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_CREATE_TOPICS: "threats-topic:1:1,incidents-topic:1:1"
+    depends_on:
+      - zookeeper
+
+  threat-detection:
+    build: ./threat-detection-service
+    ports:
+      - "4001:4001"
+    depends_on:
+      - kafka
+
+  incident-management:
+    build: ./incident-management-service
+    ports:
+      - "4002:4002"
+    depends_on:
+      - kafka
+
+  response-service:
+    build: ./response-service
+    ports:
+      - "4003:4003"
+    depends_on:
+      - kafka
+
+networks:
+  default:
+    name: mypodman-net
